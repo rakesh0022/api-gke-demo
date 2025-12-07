@@ -1,0 +1,14 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prod-ingress
+  namespace: prod-app
+  annotations:
+    kubernetes.io/ingress.class: "gce"                            # Use GCE Ingress controller
+    kubernetes.io/ingress.global-static-ip-name: "prod-lb-global-ip" # Use the reserved global IP
+spec:
+  defaultBackend:
+    service:
+      name: demo-svc
+      port:
+        number: 80
