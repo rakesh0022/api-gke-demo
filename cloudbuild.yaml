@@ -1,0 +1,43 @@
+# cloudbuild.yaml - simple build -> push -> deploy pipeline
+steps:
+  # 1) Build Docker image
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'build'
+      - '-t'
+      - '${_IMAGE}:${SHORT_SHA}'
+      - '.'
+
+  # 2) Authenticate Docker to Artifact Registry (for regional Artifact Registry)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: gcloud
+    args:
+      - 'auth'
+      - 'configure-docker'
+      - 'us-central1-docker.pkg.dev'
+
+  # 3) Push image to Artifact Registry
+  - name: 'gcr.io/cloud-builders/docker'
+    args:
+      - 'push'
+      - '${_IMAGE}:${SHORT_SHA}'
+
+  # 4) kubectl apply manifests (assumes k8s manifests at k8s/)
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: bash
+    args:
+      - '-c'
+      - |
+        gcloud container clusters get-credentials ${_GKE_CLUSTER} --zone ${_GKE_ZONE} --project $PROJECT_ID
+        kubectl apply -f k8s/
+
+images:
+  - '${_IMAGE}:${SHORT_SHA}'
+
+# Substitutions (default values can be set in trigger)
+substitutions:
+  _IMAGE: 'us-central1-docker.pkg.dev/${PROJECT_ID}/prod-images/myapp'
+  _GKE_CLUSTER: 'my-gke-cluster'
+  _GKE_ZONE: 'us-central1-a'
+
+timeout: 1200s
