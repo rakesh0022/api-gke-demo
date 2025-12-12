@@ -4,9 +4,23 @@ metadata:
   name: prod-ingress
   namespace: prod-app
   annotations:
-    kubernetes.io/ingress.class: "gce"                            # Use GCE Ingress controller
-    kubernetes.io/ingress.global-static-ip-name: "prod-lb-global-ip" # Use the reserved global IP
+    kubernetes.io/ingress.class: "gce"
+    kubernetes.io/ingress.global-static-ip-name: "prod-lb-global-ip"
+    networking.gke.io/managed-certificates: "demo-managed-cert"
 spec:
+  rules:
+  - host: 136.110.180.171.nip.io
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: demo-svc
+            port:
+              number: 80
+
+  # optional but recommended
   defaultBackend:
     service:
       name: demo-svc
