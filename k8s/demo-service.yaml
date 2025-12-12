@@ -4,11 +4,13 @@ metadata:
   name: demo-svc
   namespace: prod-app
   annotations:
+    cloud.google.com/neg: '{"ingress": true}'
     cloud.google.com/backend-config: '{"default": "demo-backendconfig"}'
 spec:
-  type: NodePort
+  type: ClusterIP
   selector:
     app: demo-app
   ports:
-    - port: 80
-      targetPort: 80
+    - name: http
+      port: 80
+      targetPort: 8080
