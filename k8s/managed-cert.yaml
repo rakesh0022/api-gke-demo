@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: demo-managed-cert
+  namespace: prod-app
+spec:
+  domains:
+    - 136.110.180.171.nip.io
