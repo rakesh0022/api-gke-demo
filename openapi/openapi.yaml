@@ -3,10 +3,6 @@ info:
   title: demo-api
   version: 1.0.0
 
-# -----------------------------------------------------------------
-# FIX: This section was missing or incorrectly indented in your file.
-# It defines the "demo-backend" you referenced below.
-# -----------------------------------------------------------------
 x-google-api-management:
   backends:
     demo-backend:
@@ -17,7 +13,6 @@ paths:
   /:
     get:
       operationId: root
-      # This tells API Gateway to look up "demo-backend" in the section above
       x-google-backend:
         address: demo-backend
       responses:
