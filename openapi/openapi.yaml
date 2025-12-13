@@ -1,17 +1,22 @@
-openapi: 3.0.0
-
+swagger: "2.0"
 info:
   title: demo-api
-  version: 1.0.0
-
-x-google-backend:
-  address: https://demo-cloudrun-api-648502722674.us-central1.run.app
-  protocol: h2
+  description: API Gateway → Cloud Run
+  version: "1.0.0"
+schemes:
+  - https
+produces:
+  - application/json
 
 paths:
   /:
     get:
+      summary: Root hello
       operationId: root
+      x-google-backend:
+        address: https://demo-cloudrun-api-648502722674.us-central1.run.app
       responses:
-        '200':
-          description: OK
+        200:
+          description: Success
+          schema:
+            type: string
