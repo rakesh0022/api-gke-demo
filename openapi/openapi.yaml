@@ -1,7 +1,8 @@
 openapi: 3.0.0
+
 info:
   title: demo-gke-api
-  description: API Gateway → GKE demo
+  description: API Gateway -> GKE Service
   version: 1.0.0
 
 paths:
@@ -16,10 +17,16 @@ paths:
         address: http://demo-svc.prod-app.svc.cluster.local
         protocol: http
 
-  /{path=**}:
+  /{path}:
     get:
-      summary: Catch-all
-      operationId: catchAllGet
+      summary: Catch all paths
+      operationId: catchAll
+      parameters:
+        - name: path
+          in: path
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
