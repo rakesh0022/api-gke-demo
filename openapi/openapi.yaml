@@ -1,15 +1,17 @@
 openapi: 3.0.0
 info:
-  title: demo-api
+  title: Demo Cloud Run API
+  description: API Gateway in front of Cloud Run
   version: 1.0.0
 
+servers:
+  - url: https://demo-cloudrun-api-648502722674.us-central1.run.app
+
 paths:
-  /health:
+  /:
     get:
-      summary: Health check
-      operationId: healthCheck
+      summary: Root endpoint
+      operationId: root
       responses:
         '200':
           description: OK
-      x-google-backend:
-        address: https://example.com
