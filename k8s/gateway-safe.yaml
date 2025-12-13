@@ -12,5 +12,3 @@ spec:
     protocol: HTTPS
     port: 443
     hostname: "gw.136.110.180.171.nip.io"
-    tls:
-      mode: Terminate
