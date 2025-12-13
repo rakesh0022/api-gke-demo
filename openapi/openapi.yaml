@@ -1,20 +1,21 @@
-openapi: 3.0.0
+# api_config.yaml snippet
+swagger: "2.0"
 info:
-  title: demo-api
-  version: 1.0.0
-
-x-google-api-management:
-  backends:
-    demo-backend:
-      address: https://demo-cloudrun-api-648502722674.us-central1.run.app
-      protocol: h2
+  title: "demo-api-gateway"
+  version: "1.0.0"
+# ... other OpenAPI definitions
 
 paths:
-  /:
+  /hello:
     get:
-      operationId: root
+      operationId: "getHello"
       x-google-backend:
-        address: demo-backend
+        # Use the nip.io FQDN of your existing GKE Ingress/LB
+        # Note: This means the LB is *still* the backend, but this
+        # is acceptable if the LB is secure and non-publicly routable to the Gateway.
+        # A better way is using a *private* LB/Ingress for the backend if possible.
+        address: "https://136.110.180.171.nip.io/hello"
+        protocol: "HTTP/2" # API Gateway typically prefers HTTP/2 for serverless backends
       responses:
         '200':
-          description: OK
+          description: "Success"
