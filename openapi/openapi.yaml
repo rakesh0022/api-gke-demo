@@ -1,4 +1,5 @@
 openapi: 3.0.0
+
 info:
   title: Demo Cloud Run API
   version: 1.0.0
@@ -7,8 +8,18 @@ paths:
   /:
     get:
       operationId: root
+      security:
+        - api_key: []
       x-google-backend:
         address: https://demo-cloudrun-api-648502722674.us-central1.run.app
+        protocol: h2
       responses:
         '200':
           description: OK
+
+components:
+  securitySchemes:
+    api_key:
+      type: apiKey
+      name: x-api-key
+      in: header
