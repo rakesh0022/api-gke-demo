@@ -3,7 +3,10 @@ info:
   title: demo-api
   version: 1.0.0
 
-# 1. Define the backend configuration here with a unique name (e.g., 'demo-backend')
+# -----------------------------------------------------------------
+# FIX: This section was missing or incorrectly indented in your file.
+# It defines the "demo-backend" you referenced below.
+# -----------------------------------------------------------------
 x-google-api-management:
   backends:
     demo-backend:
@@ -14,9 +17,9 @@ paths:
   /:
     get:
       operationId: root
-      # 2. Reference the backend name defined above
+      # This tells API Gateway to look up "demo-backend" in the section above
       x-google-backend:
-        address: demo-backend 
+        address: demo-backend
       responses:
         '200':
           description: OK
