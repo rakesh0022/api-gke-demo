@@ -1,5 +1,5 @@
 apiVersion: networking.gke.io/v1
-kind: Certificate
+kind: ManagedCertificate
 metadata:
   name: prod-gateway-cert
   namespace: prod-app
