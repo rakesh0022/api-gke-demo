@@ -1,43 +1,28 @@
 openapi: 3.0.0
-
 info:
-  title: Demo GKE API
-  description: >
-    Production-style API Gateway in front of
-    Cloud CDN + HTTPS Load Balancer + GKE.
+  title: demo-gke-api
+  description: API Gateway → GKE demo
   version: 1.0.0
 
-servers:
-  - url: https://136.110.180.171.nip.io
-    description: GKE Load Balancer backend
-
 paths:
-  /api/v1/hello:
+  /:
     get:
-      summary: Hello API
-      description: Returns a hello message from GKE backend
-      operationId: getHello
-      security:
-        - api_key: []
+      summary: Root endpoint
+      operationId: rootGet
       responses:
-        "200":
-          description: Successful response
-          content:
-            text/plain:
-              schema:
-                type: string
-        "401":
-          description: Unauthorized (missing or invalid API key)
-        "429":
-          description: Rate limit exceeded
+        '200':
+          description: OK
+      x-google-backend:
+        address: http://demo-svc.prod-app.svc.cluster.local
+        protocol: http
 
-components:
-  securitySchemes:
-    api_key:
-      type: apiKey
-      name: x-api-key
-      in: header
-
-x-google-backend:
-  address: https://136.110.180.171.nip.io
-  protocol: h2
+  /{path=**}:
+    get:
+      summary: Catch-all
+      operationId: catchAllGet
+      responses:
+        '200':
+          description: OK
+      x-google-backend:
+        address: http://demo-svc.prod-app.svc.cluster.local
+        protocol: http
