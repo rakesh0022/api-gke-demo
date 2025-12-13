@@ -3,6 +3,8 @@ kind: Gateway
 metadata:
   name: prod-gateway
   namespace: prod-app
+  annotations:
+    networking.gke.io/managed-certificates: demo-managed-cert
 spec:
   gatewayClassName: gke-l7-global-external-managed
   listeners:
@@ -12,5 +14,3 @@ spec:
     hostname: "gw.136.110.180.171.nip.io"
     tls:
       mode: Terminate
-      options:
-        networking.gke.io/managed-certificates: demo-managed-cert
