@@ -12,7 +12,5 @@ spec:
     hostname: "136.110.180.171.nip.io"
     tls:
       mode: Terminate
-      certificateRefs:
-      - kind: Certificate
-        group: networking.gke.io
-        name: prod-gateway-cert
+      options:
+        networking.gke.io/managed-certificates: prod-gateway-cert
