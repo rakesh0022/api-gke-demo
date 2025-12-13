@@ -1,22 +1,22 @@
-swagger: "2.0"
+openapi: 3.0.0
 info:
   title: demo-api
-  description: API Gateway → Cloud Run
-  version: "1.0.0"
-schemes:
-  - https
-produces:
-  - application/json
+  version: 1.0.0
+
+# 1. Define the backend configuration here with a unique name (e.g., 'demo-backend')
+x-google-api-management:
+  backends:
+    demo-backend:
+      address: https://demo-cloudrun-api-648502722674.us-central1.run.app
+      protocol: h2
 
 paths:
   /:
     get:
-      summary: Root hello
       operationId: root
+      # 2. Reference the backend name defined above
       x-google-backend:
-        address: https://demo-cloudrun-api-648502722674.us-central1.run.app
+        address: demo-backend 
       responses:
-        200:
-          description: Success
-          schema:
-            type: string
+        '200':
+          description: OK
