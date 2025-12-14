@@ -15,7 +15,10 @@ spec:
     spec:
       containers:
       - name: app
-        image: gcr.io/google-samples/hello-app:1.0
+        image: us-central1-docker.pkg.dev/rakesh-project-480508/my-repo/microservice-base:1.0
+        env:
+        - name: SERVICE_NAME
+          value: "ORDER"
         ports:
         - containerPort: 8080
 ---
