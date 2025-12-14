@@ -1,7 +1,7 @@
 apiVersion: gateway.networking.k8s.io/v1
 kind: HTTPRoute
 metadata:
-  name: prod-route
+  name: microservices-route
   namespace: prod-app
 spec:
   parentRefs:
@@ -12,7 +12,23 @@ spec:
   - matches:
     - path:
         type: PathPrefix
-        value: /
+        value: /users
     backendRefs:
-    - name: demo-svc
+    - name: user-svc
+      port: 80
+
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /orders
+    backendRefs:
+    - name: order-svc
+      port: 80
+
+  - matches:
+    - path:
+        type: PathPrefix
+        value: /payments
+    backendRefs:
+    - name: payment-svc
       port: 80
