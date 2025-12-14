@@ -1,7 +1,7 @@
 apiVersion: networking.gke.io/v1
 kind: GCPBackendPolicy
 metadata:
-  name: demo-svc-cdn
+  name: demo-cdn-policy
   namespace: prod-app
 spec:
   targetRef:
@@ -11,7 +11,3 @@ spec:
   default:
     cdn:
       enabled: true
-      cachePolicy:
-        includeHost: true
-        includeProtocol: true
-        includeQueryString: true
