@@ -261,6 +261,38 @@ This confirms:
 
 ---
 
+Where we go next (no rush, but clear path)
+
+Next logical phase:
+
+Traffic policies (supported only)
+
+Timeouts
+
+Retries
+
+Request matching
+
+Headers
+
+Methods
+
+Auth strategy decision
+
+IAP vs JWT vs external gateway
+
+Rate limiting reality check
+
+What Gateway API can do today
+
+What needs Envoy / service mesh
+
+When you’re ready, say:
+
+“Let’s start traffic policies – timeouts first”
+
+And we’ll do it strictly based on Google-supported fields, no guessing.
+
 ## Key Takeaway (Updated)
 
 The platform now supports:
