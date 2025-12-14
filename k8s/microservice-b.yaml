@@ -18,23 +18,17 @@ spec:
         image: gcr.io/google-samples/hello-app:1.0
         ports:
         - containerPort: 8080
-apiVersion: apps/v1
-kind: Deployment
+
+apiVersion: v1
+kind: Service
 metadata:
-  name: order-app
+  name: order-svc
   namespace: prod-app
+  annotations:
+    cloud.google.com/neg: '{"exposed_ports":{"80":{}}}'
 spec:
-  replicas: 2
   selector:
-    matchLabels:
-      app: order-app
-  template:
-    metadata:
-      labels:
-        app: order-app
-    spec:
-      containers:
-      - name: app
-        image: gcr.io/google-samples/hello-app:1.0
-        ports:
-        - containerPort: 8080
+    app: order-app
+  ports:
+  - port: 80
+    targetPort: 8080
