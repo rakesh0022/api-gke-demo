@@ -78,6 +78,128 @@ Pods (Microservices)
 
 ---
 
+**Containerization & Routing (Current State)**
+
+**Production Docker Image (Implemented)**
+
+All microservices now run on a single production-grade Docker image built using a multi-stage Go build.
+
+Image characteristics
+
+Language: Go 1.21
+
+Multi-stage build
+
+Final image: gcr.io/distroless/base-debian12
+
+No shell, no package manager
+
+Static binary only
+
+Docker build strategy
+
+Stage 1: Build Go binary using golang:1.21-alpine
+
+Stage 2: Copy binary into distroless runtime image
+
+Artifact Registry image
+
+us-central1-docker.pkg.dev/rakesh-project-480508/my-repo/microservice-base:1.1
+
+
+All microservices reuse this image. Service differentiation is achieved via routing, not separate images.
+
+Gateway API Routing (Finalized)
+
+A single HTTPRoute now handles routing for all microservices using path-based routing with URL rewriting.
+
+HTTPRoute
+
+Name: microservices-route
+
+Namespace: prod-app
+
+Gateway: prod-gateway
+
+Hostname: 136.110.129.148.nip.io
+
+Routing rules
+
+External Path	Backend Service	Internal Path
+/users	user-svc	/
+/orders	order-svc	/
+/payments	payment-svc	/
+
+URL rewrite (required and supported)
+
+Each rule uses a Gateway API–supported URLRewrite filter:
+
+filters:
+- type: URLRewrite
+  urlRewrite:
+    path:
+      type: ReplacePrefixMatch
+      replacePrefixMatch: /
+
+
+This ensures:
+
+Clean external APIs (/users, /orders, /payments)
+
+Simple backend services that only serve /
+
+No service-side path parsing
+
+This configuration is fully supported by GKE Gateway API and validated against Google documentation.
+
+Current Request Flow
+Client
+  │
+  ▼
+https://136.110.129.148.nip.io
+  │
+  ▼
+Global External HTTPS Load Balancer (GKE-managed)
+  │
+  ▼
+GKE Gateway (Gateway API)
+  │
+  ▼
+HTTPRoute (path match + rewrite)
+  │
+  ├── /users     → user-svc     → user-app Pods
+  ├── /orders    → order-svc    → order-app Pods
+  └── /payments  → payment-svc  → payment-app Pods
+
+Verification
+curl https://136.110.129.148.nip.io/users
+curl https://136.110.129.148.nip.io/orders
+curl https://136.110.129.148.nip.io/payments
+
+
+Each request:
+
+Hits a different Kubernetes Service
+
+Reaches different Pods
+
+Uses the same hardened container image
+
+Key Outcome
+
+✅ True microservice routing
+
+✅ No legacy Ingress
+
+✅ No unsupported Gateway features
+
+✅ Production-grade containers
+
+✅ Clean separation of routing and service logic
+
+At this point, the data plane is solid.
+Next phases can focus purely on traffic policies (timeouts, retries), auth, and rate limiting—without touching the foundation.
+
 ### 4. Microservices Deployed
 
 All services run in namespace: `prod-app`
