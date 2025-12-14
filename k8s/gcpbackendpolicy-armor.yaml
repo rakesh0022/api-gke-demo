@@ -1,0 +1,12 @@
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: demo-svc-armor
+  namespace: prod-app
+spec:
+  default:
+    securityPolicy: prod-gateway-armor
+  targetRef:
+    group: ""
+    kind: Service
+    name: demo-svc
