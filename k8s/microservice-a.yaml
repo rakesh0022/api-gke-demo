@@ -13,6 +13,9 @@ spec:
       labels:
         app: user-app
     spec:
+      # --- ADD THE IMAGE PULL SECRET HERE ---
+      imagePullSecrets:
+      - name: gar-key
       containers:
       - name: app
         image: us-central1-docker.pkg.dev/rakesh-project-480508/my-repo/microservice-base:1.0
