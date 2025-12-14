@@ -13,4 +13,4 @@ spec:
     tls:
       mode: Terminate
       options:
-        networking.gke.io/managed-certificates: prod-gateway-cert
+        networking.gke.io/pre-shared-certs: prod-gateway-cert
