@@ -191,23 +191,82 @@ Each microservice is reachable and load-balanced.
 
 ---
 
-## Next Planned Steps
+## Containerization Update (Implemented)
 
-1. Create a **custom Docker image** with service-specific responses
-2. Update deployments to use the new image
-3. Add advanced HTTPRoute rules
-4. Introduce supported traffic policies (timeouts, retries)
-5. Re-evaluate API Gateway vs GKE Gateway roles
+### Custom Docker Image
+
+* A **custom Dockerfile** and HTTP server were created to ensure each microservice returns a **distinct response** (service name, version, pod info).
+* The image was built and pushed to **Google Artifact Registry (GAR)**.
+
+Example image pattern:
+
+```
+<REGION>-docker.pkg.dev/<PROJECT>/<REPO>/<service-name>:v1
+```
+
+Each microservice deployment now:
+
+* Uses the **same base image**
+* Is configured via **ENV variables** (SERVICE_NAME, SERVICE_VERSION)
+* Produces unique responses per service
+
+This avoids maintaining multiple images while still keeping responses distinguishable.
 
 ---
 
-## Key Takeaway
+## Deployment Changes
 
-This architecture is:
+* `demo-app`, `user-app`, `order-app`, and `payment-app` deployments updated
 
-* Production-aligned
-* Gateway API–native
-* Future-proof for service mesh–like controls
-* Cleanly separated from deprecated Ingress patterns
+* Image source switched from:
 
-No hacks. No unsupported fields. No surprises.
+  ```
+  gcr.io/google-samples/hello-app:1.0
+  ```
+
+  to the custom GAR-hosted image
+
+* No service or HTTPRoute changes were required
+
+---
+
+## Current Verification
+
+Each path now returns a **service-specific response**:
+
+| Path       | Expected Response      |
+| ---------- | ---------------------- |
+| `/`        | demo service output    |
+| `/user`    | user service output    |
+| `/order`   | order service output   |
+| `/payment` | payment service output |
+
+This confirms:
+
+* Correct HTTPRoute path-based routing
+* Correct Service → Pod resolution
+* Correct image rollout
+
+---
+
+## Next Planned Steps
+
+1. Apply **traffic policies** using supported Gateway API features
+
+   * Timeouts
+   * Retries
+2. Introduce **request-based routing** (headers / methods)
+3. Add **rate limiting & auth** (Gateway-native or sidecar-based)
+4. Prepare for production domain (replace nip.io)
+
+---
+
+## Key Takeaway (Updated)
+
+The platform now supports:
+
+* True microservice differentiation
+* Single reusable container image
+* Clean promotion to prod-ready traffic governance
+
+The foundation is solid. Next steps focus purely on **policy & control**, not plumbing.
