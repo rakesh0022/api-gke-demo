@@ -1,0 +1,17 @@
+apiVersion: networking.gke.io/v1
+kind: GCPBackendPolicy
+metadata:
+  name: demo-svc-cdn
+  namespace: prod-app
+spec:
+  targetRef:
+    group: ""
+    kind: Service
+    name: demo-svc
+  default:
+    cdn:
+      enabled: true
+      cachePolicy:
+        includeHost: true
+        includeProtocol: true
+        includeQueryString: true
