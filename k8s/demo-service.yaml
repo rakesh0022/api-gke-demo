@@ -3,12 +3,9 @@ kind: Service
 metadata:
   name: demo-svc
   namespace: prod-app
-  annotations:
 spec:
-  type: ClusterIP
   selector:
-    app: demo-app
+    app: demo
   ports:
-    - name: http
-      port: 80
-      targetPort: 8080
+  - port: 80
+    targetPort: 8080
