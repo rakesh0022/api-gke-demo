@@ -4,8 +4,11 @@ metadata:
   name: demo-svc
   namespace: prod-app
 spec:
+  type: ClusterIP
   selector:
     app: demo
   ports:
-  - port: 80
-    targetPort: 8080
+    - name: http
+      port: 80
+      targetPort: 8080
+      appProtocol: HTTP
