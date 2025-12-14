@@ -18,3 +18,23 @@ spec:
         image: gcr.io/google-samples/hello-app:1.0
         ports:
         - containerPort: 8080
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-app
+  namespace: prod-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: order-app
+  template:
+    metadata:
+      labels:
+        app: order-app
+    spec:
+      containers:
+      - name: app
+        image: gcr.io/google-samples/hello-app:1.0
+        ports:
+        - containerPort: 8080
