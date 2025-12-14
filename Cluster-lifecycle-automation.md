@@ -62,7 +62,112 @@ echo "Cluster deleted successfully"
 
 Save as: `scripts/create-cluster.sh`
 
+> **Reviewed & corrected** based on the *actual cluster features we used earlier* (Gateway API, NEG, L7 LB behavior, required APIs).
+
 ```bash
+#!/bin/bash
+
+set -e
+
+# -----------------------------
+# Config
+# -----------------------------
+PROJECT_ID="rakesh-project-480508"
+REGION="us-central1"
+CLUSTER_NAME="prod-gke-cluster"
+NAMESPACE="prod-app"
+NODE_COUNT=2
+MACHINE_TYPE="e2-standard-4"
+
+# -----------------------------
+# Enable Required APIs (FULL SET)
+# -----------------------------
+# These are REQUIRED for Gateway API + L7 LB + NEG
+
+echo "Enabling required GCP APIs"
+gcloud services enable \
+  container.googleapis.com \
+  compute.googleapis.com \
+  iam.googleapis.com \
+  certificatemanager.googleapis.com \
+  networkservices.googleapis.com \
+  networksecurity.googleapis.com \
+  --project $PROJECT_ID
+
+# -----------------------------
+# Create GKE Cluster (Gateway-ready)
+# -----------------------------
+
+echo "Creating GKE cluster with Gateway API support"
+
+gcloud container clusters create $CLUSTER_NAME \
+  --project $PROJECT_ID \
+  --region $REGION \
+  --num-nodes $NODE_COUNT \
+  --machine-type $MACHINE_TYPE \
+  --enable-ip-alias \
+  --enable-autorepair \
+  --enable-autoupgrade \
+  --enable-dataplane-v2 \
+  --release-channel regular \
+  --workload-pool="$PROJECT_ID.svc.id.goog"
+
+# -----------------------------
+# Get kubeconfig
+# -----------------------------
+
+gcloud container clusters get-credentials $CLUSTER_NAME \
+  --region $REGION \
+  --project $PROJECT_ID
+
+# -----------------------------
+# Enable Gateway API (CRDs)
+# -----------------------------
+# REQUIRED – otherwise Gateway resources will fail
+
+echo "Enabling Gateway API on the cluster"
+
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.0.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
+kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.0.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
+
+# -----------------------------
+# Create Namespace
+# -----------------------------
+
+kubectl create namespace $NAMESPACE || true
+
+# -----------------------------
+# Deploy Microservices (Deployments + Services)
+# -----------------------------
+
+echo "Deploying microservices"
+
+kubectl apply -n $NAMESPACE -f k8s/demo-deployment.yaml
+kubectl apply -n $NAMESPACE -f k8s/microservice-a.yaml
+kubectl apply -n $NAMESPACE -f k8s/microservice-b.yaml
+kubectl apply -n $NAMESPACE -f k8s/microservice-c.yaml
+
+# -----------------------------
+# Deploy Gateway + HTTPRoute
+# -----------------------------
+
+echo "Deploying Gateway API resources"
+
+kubectl apply -n $NAMESPACE -f k8s/gateway.yaml
+kubectl apply -n $NAMESPACE -f k8s/httproute.yaml
+
+# -----------------------------
+# Wait for Gateway to be Ready
+# -----------------------------
+
+echo "Waiting for Gateway to be Programmed"
+
+kubectl wait gateway prod-gateway \
+  -n $NAMESPACE \
+  --for=condition=Programmed \
+  --timeout=20m
+
+echo "Cluster setup completed successfully"bash
 #!/bin/bash
 
 set -e
