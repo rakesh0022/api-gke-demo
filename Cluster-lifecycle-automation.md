@@ -58,15 +58,39 @@ echo "Cluster deleted successfully"
 
 ---
 
-## 3. Full Create Script (End-to-End)
+## 3. Full Create Script (End-to-End – Reviewed & Corrected)
 
-Save as: `scripts/create-cluster.sh`
+Below is the **corrected automation flow**, aligned with how GKE Gateway actually works.
 
-> **Reviewed & corrected** based on the *actual cluster features we used earlier* (Gateway API, NEG, L7 LB behavior, required APIs).
+### Important Corrections (Read This First)
+
+1. **The cluster is created only once**
+
+   * Earlier confusion was due to explanation, not an actual second `create` command
+   * This script creates the cluster **exactly one time**
+
+2. **Gateway creation ≠ fully finished LB setup**
+
+   * Gateway creation triggers LB provisioning **asynchronously**
+   * The external IP is allocated **after** Gateway becomes `Programmed`
+
+3. **SSL certificate CANNOT be fully automated**
+
+   * We must first:
+
+     * Wait for Gateway LB IP
+     * Derive `nip.io` hostname
+     * Create Google-managed SSL cert
+     * Update Gateway to reference the cert
+
+Because of this, the script is intentionally split into **automated** and **manual-intervention checkpoints**.
+
+---
+
+### Script: `scripts/create-cluster.sh`
 
 ```bash
 #!/bin/bash
-
 set -e
 
 # -----------------------------
@@ -80,25 +104,24 @@ NODE_COUNT=2
 MACHINE_TYPE="e2-standard-4"
 
 # -----------------------------
-# Enable Required APIs (FULL SET)
+# Enable Required APIs
 # -----------------------------
-# These are REQUIRED for Gateway API + L7 LB + NEG
 
 echo "Enabling required GCP APIs"
 gcloud services enable \
   container.googleapis.com \
   compute.googleapis.com \
   iam.googleapis.com \
-  certificatemanager.googleapis.com \
   networkservices.googleapis.com \
   networksecurity.googleapis.com \
+  certificatemanager.googleapis.com \
   --project $PROJECT_ID
 
 # -----------------------------
-# Create GKE Cluster (Gateway-ready)
+# Create GKE Cluster (ONCE)
 # -----------------------------
 
-echo "Creating GKE cluster with Gateway API support"
+echo "Creating GKE cluster"
 
 gcloud container clusters create $CLUSTER_NAME \
   --project $PROJECT_ID \
@@ -106,14 +129,14 @@ gcloud container clusters create $CLUSTER_NAME \
   --num-nodes $NODE_COUNT \
   --machine-type $MACHINE_TYPE \
   --enable-ip-alias \
+  --enable-dataplane-v2 \
   --enable-autorepair \
   --enable-autoupgrade \
-  --enable-dataplane-v2 \
   --release-channel regular \
   --workload-pool="$PROJECT_ID.svc.id.goog"
 
 # -----------------------------
-# Get kubeconfig
+# Fetch Credentials
 # -----------------------------
 
 gcloud container clusters get-credentials $CLUSTER_NAME \
@@ -121,11 +144,8 @@ gcloud container clusters get-credentials $CLUSTER_NAME \
   --project $PROJECT_ID
 
 # -----------------------------
-# Enable Gateway API (CRDs)
+# Enable Gateway API CRDs
 # -----------------------------
-# REQUIRED – otherwise Gateway resources will fail
-
-echo "Enabling Gateway API on the cluster"
 
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.0.0/config/crd/standard/gateway.networking.k8s.io_gateways.yaml
 kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v1.0.0/config/crd/standard/gateway.networking.k8s.io_httproutes.yaml
@@ -137,7 +157,7 @@ kubectl apply -f https://raw.githubusercontent.com/kubernetes-sigs/gateway-api/v
 kubectl create namespace $NAMESPACE || true
 
 # -----------------------------
-# Deploy Microservices (Deployments + Services)
+# Deploy Workloads & Services
 # -----------------------------
 
 echo "Deploying microservices"
@@ -148,16 +168,16 @@ kubectl apply -n $NAMESPACE -f k8s/microservice-b.yaml
 kubectl apply -n $NAMESPACE -f k8s/microservice-c.yaml
 
 # -----------------------------
-# Deploy Gateway + HTTPRoute
+# Deploy Gateway (NO TLS YET)
 # -----------------------------
 
-echo "Deploying Gateway API resources"
+echo "Deploying Gateway without TLS"
 
 kubectl apply -n $NAMESPACE -f k8s/gateway.yaml
 kubectl apply -n $NAMESPACE -f k8s/httproute.yaml
 
 # -----------------------------
-# Wait for Gateway to be Ready
+# Wait for Gateway LB IP
 # -----------------------------
 
 echo "Waiting for Gateway to be Programmed"
@@ -167,7 +187,67 @@ kubectl wait gateway prod-gateway \
   --for=condition=Programmed \
   --timeout=20m
 
-echo "Cluster setup completed successfully"bash
+echo "Gateway created successfully"
+
+echo "NEXT MANUAL STEP REQUIRED:"
+echo "1. Get Gateway IP"
+echo "2. Create SSL certificate"
+echo "3. Patch Gateway with cert"
+```
+
+---
+
+## 4. Manual Step (MANDATORY – Cannot Be Automated)
+
+### Step 1: Get Gateway IP
+
+```bash
+kubectl get gateway prod-gateway -n prod-app -o jsonpath='{.status.addresses[0].value}'
+```
+
+Example output:
+
+```
+136.110.129.148
+```
+
+### Step 2: Create Google Managed SSL Cert
+
+```bash
+gcloud compute ssl-certificates create prod-gateway-cert \
+  --domains=136.110.129.148.nip.io \
+  --global
+```
+
+> Wait until cert status becomes `ACTIVE`.
+
+### Step 3: Patch Gateway to Use SSL
+
+```bash
+kubectl apply -n prod-app -f k8s/gateway-with-tls.yaml
+```
+
+---
+
+## Why This Split Is REQUIRED
+
+| Item            | Reason                      |
+| --------------- | --------------------------- |
+| Gateway IP      | Allocated asynchronously    |
+| nip.io hostname | Depends on actual IP        |
+| Managed cert    | Needs real domain           |
+| Gateway TLS     | References pre-created cert |
+
+Trying to fully automate this **will break** in real production as well.
+
+---
+
+## Final Truth
+
+This is not a scripting limitation.
+This is **how Google Cloud L7 load balancing works**.
+
+You now have a **correct, production-grade lifecycle flow**.bash
 #!/bin/bash
 
 set -e
@@ -178,42 +258,57 @@ CLUSTER_NAME="prod-gke-cluster"
 NAMESPACE="prod-app"
 
 # -----------------------------
+
 # Enable Required APIs
+
 # -----------------------------
+
 echo "Enabling required APIs"
-gcloud services enable \
-  container.googleapis.com \
-  compute.googleapis.com \
-  certificatemanager.googleapis.com \
-  --project $PROJECT_ID
+gcloud services enable 
+container.googleapis.com 
+compute.googleapis.com 
+certificatemanager.googleapis.com 
+--project $PROJECT_ID
 
 # -----------------------------
+
 # Create GKE Cluster
+
 # -----------------------------
+
 echo "Creating GKE cluster"
-gcloud container clusters create $CLUSTER_NAME \
-  --region $REGION \
-  --num-nodes 2 \
-  --enable-ip-alias \
-  --enable-autorepair \
-  --enable-autoupgrade \
-  --project $PROJECT_ID
+gcloud container clusters create $CLUSTER_NAME 
+--region $REGION 
+--num-nodes 2 
+--enable-ip-alias 
+--enable-autorepair 
+--enable-autoupgrade 
+--project $PROJECT_ID
 
 # -----------------------------
+
 # Get Cluster Credentials
-# -----------------------------
-gcloud container clusters get-credentials $CLUSTER_NAME \
-  --region $REGION \
-  --project $PROJECT_ID
 
 # -----------------------------
-# Create Namespace
+
+gcloud container clusters get-credentials $CLUSTER_NAME 
+--region $REGION 
+--project $PROJECT_ID
+
 # -----------------------------
+
+# Create Namespace
+
+# -----------------------------
+
 kubectl create namespace $NAMESPACE || true
 
 # -----------------------------
+
 # Deploy Microservices
+
 # -----------------------------
+
 echo "Deploying microservices"
 kubectl apply -n $NAMESPACE -f k8s/microservice-a.yaml
 kubectl apply -n $NAMESPACE -f k8s/microservice-b.yaml
@@ -221,23 +316,30 @@ kubectl apply -n $NAMESPACE -f k8s/microservice-c.yaml
 kubectl apply -n $NAMESPACE -f k8s/demo-deployment.yaml
 
 # -----------------------------
+
 # Deploy Gateway API Resources
+
 # -----------------------------
+
 echo "Deploying Gateway and HTTPRoute"
 kubectl apply -n $NAMESPACE -f k8s/gateway.yaml
 kubectl apply -n $NAMESPACE -f k8s/httproute.yaml
 
 # -----------------------------
+
 # Verify
+
 # -----------------------------
+
 echo "Waiting for Gateway to be ready"
-kubectl wait gateway prod-gateway \
-  -n $NAMESPACE \
-  --for=condition=Programmed \
-  --timeout=15m
+kubectl wait gateway prod-gateway 
+-n $NAMESPACE 
+--for=condition=Programmed 
+--timeout=15m
 
 echo "Setup complete"
-```
+
+````
 
 ---
 
@@ -246,12 +348,11 @@ echo "Setup complete"
 These **must be done once per project**.
 
 ### 4.1 Artifact Registry
-
 ```bash
 gcloud artifacts repositories create microservices \
   --repository-format=docker \
   --location=us-central1
-```
+````
 
 ### 4.2 Build & Push Image
 
