@@ -7,7 +7,7 @@ spec:
   parentRefs:
   - name: prod-gateway
   hostnames:
-  - "136.110.129.148.nip.io"
+  - "34.13.117.234.nip.io"
   rules:
   - matches:
     - path:
