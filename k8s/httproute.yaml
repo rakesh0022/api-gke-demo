@@ -59,3 +59,10 @@ spec:
           type: ReplacePrefixMatch
           replacePrefixMatch: /
     # ----------------------------------------------------------------
+  - matches:
+  - path:
+      type: PathPrefix
+      value: /
+  backendRefs:
+  - name: demo-svc
+    port: 80
