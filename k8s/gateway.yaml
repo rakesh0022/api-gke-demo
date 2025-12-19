@@ -6,6 +6,11 @@ metadata:
 spec:
   gatewayClassName: gke-l7-global-external-managed
   listeners:
-  - name: http
-    protocol: HTTP
-    port: 80
+  - name: https
+    protocol: HTTPS
+    port: 443
+    hostname: 34.13.117.234.nip.io
+    tls:
+      mode: Terminate
+      options:
+        networking.gke.io/pre-shared-certs: prod-gateway-cert-new
