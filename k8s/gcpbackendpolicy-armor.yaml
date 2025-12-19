@@ -9,4 +9,4 @@ spec:
   targetRef:
     group: ""
     kind: Service
-    name: demo-svc
+    name: user-svc
