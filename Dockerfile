@@ -16,7 +16,7 @@ WORKDIR /app
 
 # Copy the compiled binary from the builder stage
 # IMPORTANT: Use the --chmod=+x flag to set the executable permission!
-COPY --from=builder --chmod=+x /app/server /app/server
+COPY --from=builder /app/server /app/server
 
 EXPOSE 8080
 
