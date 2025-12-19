@@ -5,7 +5,7 @@ metadata:
   namespace: prod-app
 spec:
   default:
-    securityPolicy: prod-gateway-armor
+    securityPolicy: prod-gateway-policy
   targetRef:
     group: ""
     kind: Service
