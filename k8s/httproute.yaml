@@ -16,15 +16,12 @@ spec:
     backendRefs:
     - name: user-svc
       port: 80
-    # ----------------------------------------------------------------
-    # FIX: Add a Filter to strip the path prefix before forwarding
     filters:
     - type: URLRewrite
       urlRewrite:
         path:
           type: ReplacePrefixMatch
           replacePrefixMatch: /
-    # ----------------------------------------------------------------
 
   - matches:
     - path:
@@ -33,15 +30,12 @@ spec:
     backendRefs:
     - name: order-svc
       port: 80
-    # ----------------------------------------------------------------
-    # FIX: Add a Filter to strip the path prefix before forwarding
     filters:
     - type: URLRewrite
       urlRewrite:
         path:
           type: ReplacePrefixMatch
           replacePrefixMatch: /
-    # ----------------------------------------------------------------
 
   - matches:
     - path:
@@ -50,19 +44,18 @@ spec:
     backendRefs:
     - name: payment-svc
       port: 80
-    # ----------------------------------------------------------------
-    # FIX: Add a Filter to strip the path prefix before forwarding
     filters:
     - type: URLRewrite
       urlRewrite:
         path:
           type: ReplacePrefixMatch
           replacePrefixMatch: /
-    # ----------------------------------------------------------------
+
+  # Default route
   - matches:
-  - path:
-      type: PathPrefix
-      value: /
-  backendRefs:
-  - name: demo-svc
-    port: 80
+    - path:
+        type: PathPrefix
+        value: /
+    backendRefs:
+    - name: demo-svc
+      port: 80
